@@ -29,4 +29,4 @@
 - Allow all outgoing traffic
 
 ### Environment
-- Set up python and requirements.
+- Set up python3 and requirements.
