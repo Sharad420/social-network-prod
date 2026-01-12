@@ -12,6 +12,8 @@ __pycache__/
 
 
 # === Virtual environments ===
+# Venv is named socialnetworkprod locally.
+socialnetworkprod/ 
 venv/
 .venv/
 env/
