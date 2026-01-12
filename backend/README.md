@@ -38,7 +38,7 @@ A full-stack social networking application built with **Django** and **React**, 
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/your-username/social-network.git
+   git clone https://github.com/Sharad420/social-network.git
    cd social-network
 
 2. **Create and activate a virtual environment:**
