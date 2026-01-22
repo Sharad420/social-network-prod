@@ -6,6 +6,8 @@ from rest_framework.permissions import AllowAny
 from . import views
 from .utils import CustomTokenRefreshView
 
+# These are relative paths within the django app itself.
+
 urlpatterns = [
     path("login", views.login_view, name="login"),
     path("logout", views.logout_view, name="logout"),

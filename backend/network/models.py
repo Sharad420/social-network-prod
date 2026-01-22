@@ -5,6 +5,7 @@ import hashlib
 
 class User(AbstractUser):
     is_user_verified = models.BooleanField(default=False)
+    profile_image_url = models.URLField(blank=True, null=True)
     pass
 
 
