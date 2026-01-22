@@ -15,10 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import include, path
+import os
 
 # These are paths that list URL routes to vies.
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", include("network.urls")),
+    path(os.getenv("API_PREFIX", "api/"), include("network.urls")),
 ]
