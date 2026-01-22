@@ -4,10 +4,14 @@ import { jwtDecode } from "jwt-decode";
 /*
     Attaches the access token before every request, and the cookie containing the refresh token if the access token has expired.
 */
+// Use the /api prefix to ensure consistent routing via nginx.
+
+// Import api base for dev mode.
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 
 // Create API instance
 const api = axios.create({
-    baseURL:"https://127.0.0.1:8000",
+    baseURL:API_BASE,
     withCredentials: true
 });
 
