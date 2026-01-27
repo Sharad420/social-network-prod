@@ -17,6 +17,8 @@
 
 ### Notes
 - DO NOT restart ssh before confirming new key login
+- Port is just a label/number to indicate that a certain service can communicate by using that specific port. 
+- Socket is an endpoint(usually a file descriptor), that contains details about the protocols, which a process can use to communicate with another service via the socket.
 
 
 ### Limited User
@@ -28,6 +30,7 @@
 - Set up permissions to deny all incoming traffic except ssh and port 8000, where backend is hosted.
 - Allow all outgoing traffic
 - Allowed firewall to allow port 80 and 443 for HTTP/S respectively.
+- Allowed incoming traffic onto Nginx, bascially enabling it's role as a reverse proxy.
 
 ### Environment
 - Set up python3 and requirements.
@@ -40,7 +43,7 @@
 - Provided the root directory from which to read from.
 - Provided react routing support on refresh for SPAs.
 - Symlinked sites-available and sites-enabled, to maintain seperation and to handles updates cleanly.
-- 
+- Set up reverse proxy to ensure all /api/ requests are forwarded to gunicorn and subsequently Django, and all / requests are served from nginx itself.
 
 ### Database
 - Using PostgreSQL for the RDBMS, running on port 5432.
@@ -51,6 +54,7 @@
 ### Gateway Interface
 - Using WSGI for now, switching to ASGI if WebSockets and persistent connections come into play.
 - Gunicorn has been set up and linked to Nginx.
+- Unix domain socket created by systemd at start/restart. Nginx talks to Gunicorn via this socket. No longer uses the 8000 TCP port for communication. This is because this socket's protocols are faster than TCP, unsure about the exact details. Recommended by Gunicorn.
 
 
 ### Process manager
@@ -65,7 +69,22 @@
 - Set up gunicorn.service to run on boot and created symlink between multi-user.target/wants and gunicorn.service
 - Will restart on any crash.
 - Unit started after network.target
+- Unix domain socket created by systemd at start/restart.
 
+### Domain name
+- Bought a domain name off Hostinger, thewarpnetwork.com
+- Named after the Warp in Warhammer 40k.
+- Added an A record which points to public IP address.
+- CNAME which allows for the www. alias to point to the A record.
+- CAA record which allows for certain companies to issue a security badge.
+- TXT record used for mailjet to validate domain.
+- SPF (SPF tells mail servers that these specific servers are allowed to send mail using thewarpnetwork.com) and DKIM(DKIM adds a cryptographic signature to every email you send. Mailjet provides a unique key for this. It stores a private key which it uses to sign every email. The mail receiver does a DNS lookup, finds the public key and decrypts the mail, confirming that it has not been tampered with) set up using values provided by Mailjet.
+- Newer security fallback, DMARC also provided. 
 
 ### Logging
 - Logging handled by journalctl for now, will check if something more customized is required.
+
+### Mail Service
+- Using Mailjet API because it has a very generous Free tier, no credit card required.
+- Linode has an external firewall that blocks SMTP ports due to spam and security issues. Email providers use the web port.
+- Appropriate Domain set up has been done.

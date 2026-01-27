@@ -30,7 +30,15 @@ if not SECRET_KEY:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DJANGO_DEBUG", False) == "True"
 
-ALLOWED_HOSTS = []
+if DEBUG:
+    ALLOWED_HOSTS = ['localhost',
+                     '127.0.0.1']
+else:
+    ALLOWED_HOSTS = ['thewarpnetwork.com',
+                'www.thewarpnetwork.com',
+                '172.105.58.28',
+                '127.0.0.1',
+                'localhost']
 
 
 # Application definition
@@ -47,6 +55,7 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_framework_simplejwt.token_blacklist',
     'dj_rest_auth',
     'dj_rest_auth.registration',
     'allauth',
@@ -91,12 +100,25 @@ WSGI_APPLICATION = 'project4.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('POSTGRES_DB', 'social_network_db'),
+            'USER': os.getenv('POSTGRES_USER', 'social_network-user'),
+            'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
+            'HOST': 'localhost',
+            'PORT': '5432',
+        }
+    }
+
 
 AUTH_USER_MODEL = "network.User"
 
@@ -136,7 +158,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_URL = '/static/'
+if DEBUG:
+    STATIC_URL = '/static/'
+else:
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    STATIC_URL = '/static/'
 
 # REST Configuration
 # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/getting_started.html#requirements
@@ -151,34 +177,41 @@ REST_FRAMEWORK = {
 }
 
 # React App origin
+if DEBUG:
+    CSRF_TRUSTED_ORIGINS = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ]
 
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
+    CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
+else:
+    CSRF_TRUSTED_ORIGINS = []
+    CORS_ALLOWED_ORIGINS = []
 
 CORS_ALLOW_CREDENTIALS = True
 
 
 # Email settings
 
+# Not using django-anymail, because at it's core, it is still a sync library, slightly more effecient to use async http, especially on a small server like Linode.
 # EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")  # your Gmail address
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")  # your 16-char app password
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
+MAILJET_SECRET_KEY = os.getenv("MAILJET_SECRET_KEY")
+DEFAULT_FROM_EMAIL = "no-reply@thewarpnetwork.com"
+DEFAULT_FROM_NAME = "Mailjet Pilot - No Reply"
+SERVER_EMAIL = "support@thewarpnetwork.com"
+
+# A 'Console' backend for local development
+# This prevents your app from trying to call the real API during testing
+if os.getenv("DEBUG") == "True":
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
 # JWT settings
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=20),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }

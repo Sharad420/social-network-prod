@@ -6,6 +6,7 @@ import os
 import urllib.parse
 import random
 import hashlib
+import traceback
 from asgiref.sync import sync_to_async
 from django.conf import settings
 from django.contrib.auth import authenticate, login, logout
@@ -29,6 +30,7 @@ from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from rest_framework.pagination import PageNumberPagination
+from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
 
 
 
@@ -117,20 +119,22 @@ def logout_view(request):
         return Response({"detail": "No refresh token provided."}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        token = RefreshToken(raw_refresh)
+        token = CustomRefreshToken(raw_refresh)
+    
+        jti = token.get("jti")
+        token.blacklist()
+        try:
+            session = RefreshSession.objects.get(jti=jti, revoked=False)
+            session.revoke()
+        except RefreshSession.DoesNotExist:
+            #  return Response({"detail": "Token already revoked or not found"}, status=status.HTTP_400_BAD_REQUEST)
+            pass
+        
+        response = Response({"message":"Successfully logged out"}, status=status.HTTP_200_OK)
+        response.delete_cookie("refresh_token", path="/")
+        return response
     except TokenError:
         raise InvalidToken("Invalid refresh token")
-    
-    jti = token.get("jti")
-    try:
-        session = RefreshSession.objects.get(jti=jti, revoked=False)
-        session.revoke()
-    except RefreshSession.DoesNotExist:
-        return Response({"detail": "Token already revoked or not found"}, status=status.HTTP_400_BAD_REQUEST)
-    
-    response = Response({"message":"Successfully logged out"}, status=status.HTTP_200_OK)
-    response.delete_cookie("refresh_token", path="/")
-    return response
 
 
 ##############################################################################################
@@ -152,6 +156,7 @@ def logout_view(request):
 
 
 # DRF does not support async views!! So just stick to native async def supported by Django
+# async in Python is "infectious". Which means every function call in the async view must also be async.
 
 @api_view(["GET"])
 def check_username(request):
@@ -211,12 +216,13 @@ async def send_verification(request):
         await add_key_value_redis(f"verify:{flow_type}:{email}", code, expire=180)
 
         # Send email (async)
-        await send_verification_email(email, code)
+        success = await send_verification_email(email, code)
+        if not success:
+            return JsonResponse({"error": "Failed to send email. Try again later."}, status=503)
 
         return JsonResponse({"message": "Email verification sent"})
 
     except Exception as e:
-        import traceback
         traceback.print_exc()
         return JsonResponse({"error": str(e)}, status=500)
 
@@ -372,12 +378,19 @@ async def reset_password(request):
     user.set_password(new_password)
     await sync_to_async(user.save)()
 
-    sessions = await sync_to_async(
-        lambda: list(RefreshSession.objects.filter(user=user, revoked=False))
-    )()
+    # helpers.py or top of views.py
+    def bulk_blacklist_user_sessions(user):
+        
+        # 1. Kill the JWTs in SimpleJWT's internal tracker
+        tokens = OutstandingToken.objects.filter(user=user)
+        for token in tokens:
+            BlacklistedToken.objects.get_or_create(token=token)
+            
+        # 2. Kill the sessions in your custom tracker
+        RefreshSession.objects.filter(user=user, revoked=False).update(revoked=True)
 
-    for session in sessions:
-        await sync_to_async(session.revoke)()
+    # 2. NUCLEAR OPTION: Logout everywhere
+    await sync_to_async(bulk_blacklist_user_sessions)(user)
 
     # Delete single-use token
     await delete_key_redis(f"verified_token:reset:{token}")
@@ -388,7 +401,7 @@ async def reset_password(request):
 ##############################################################################################
 ##############################################################################################
 ##############################################################################################
-    
+
 
 
 
