@@ -2,9 +2,13 @@ import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthContext";
 
 const ProtectedRoute = ({ children }) => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, loading } = useAuth();
     const location = useLocation();
 
+    if (loading) {
+        return null; // or spinner
+    }
+    
     if (!isAuthenticated) {
         return (
             <Navigate 

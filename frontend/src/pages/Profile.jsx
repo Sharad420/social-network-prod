@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 import { useState, useEffect } from "react"
 import { Skeleton } from "../components/ui/skeleton";
@@ -201,12 +201,12 @@ export default function Profile() {
                 <ul className="space-y-2">
                     {followList.map((user, index) => (
                     <li key={index}>
-                        <a
-                        href={`/profile/${user.username}`}
+                        <Link
+                        to={`/profile/${user.username}`}
                         className="text-blue-600 hover:underline"
                         >
                         {user.username}
-                        </a>
+                        </Link>
                     </li>
                     ))}
                 </ul>

@@ -131,7 +131,11 @@ def logout_view(request):
             pass
         
         response = Response({"message":"Successfully logged out"}, status=status.HTTP_200_OK)
-        response.delete_cookie("refresh_token", path="/")
+        response.delete_cookie(
+            "refresh_token", 
+            path="/",
+            samesite="None",
+        )
         return response
     except TokenError:
         raise InvalidToken("Invalid refresh token")

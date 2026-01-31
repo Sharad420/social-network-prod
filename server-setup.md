@@ -55,6 +55,10 @@
 - Using WSGI for now, switching to ASGI if WebSockets and persistent connections come into play.
 - Gunicorn has been set up and linked to Nginx.
 - Unix domain socket created by systemd at start/restart. Nginx talks to Gunicorn via this socket. No longer uses the 8000 TCP port for communication. This is because this socket's protocols are faster than TCP, unsure about the exact details. Recommended by Gunicorn.
+- Added a Uvicorn worker in the Gunicorn manager, to allow for async tasks to run in the event loop with the speed and reliability of Gunicorn.
+- Why this matters:
+- The Worker Class: Without --worker-class uvicorn.workers.UvicornWorker, Gunicorn defaults to its sync worker. It will try to run your code line-by-line and will choke if you try to use WebSockets or high-concurrency async features later.
+- ASGI: WSGI is the "old" synchronous standard. ASGI is the "new" asynchronous standard. Since Uvicorn is an ASGI server, it needs to hook into project4.asgi:application. Uses event loops unlike Gunicorn's blocking workers.
 
 
 ### Process manager
@@ -88,3 +92,25 @@
 - Using Mailjet API because it has a very generous Free tier, no credit card required.
 - Linode has an external firewall that blocks SMTP ports due to spam and security issues. Email providers use the web port.
 - Appropriate Domain set up has been done.
+
+### Cleanup
+- Set up a cron job to flush expired refresh tokens every day at midnight.
+
+### Other security features
+- Decided not use CSRF checks, because Django DRF rejects CSRF anyway, assuming you're using session based auth
+- The async views which might need CSRF don't really need to do so, because all those views are only when the user is logged out.
+- CORS, XSS injections are handled as per best practices
+- Dangerously set innerHTML to be looked into.
+- HTTPS set up by CertBot and configured in Nginx.
+
+### Rate Limiting
+- Currently enforcing a global rate limit via nginx.
+- To implement per view rate limiting via Django's rate limit feature
+- rate=10r/s/ip
+- burst=15, If browser makes 15 reqs at once, to load a page, nginx allows them.
+- nodelay tells nginx to process the burst immediately rather than making the user wait for each request.
+- (base) ➜  ~ seq 50 | xargs -I{} -P 10 curl -sI https://www.thewarpnetwork.com/api/send_verification | grep HTTP; to check for rate limits.
+
+### Message queuing and caching
+- Nothing needed as of now, if requests get exponentially more and stuff, probably have to.
+- Caching also is unnecessary as of now.

@@ -127,6 +127,7 @@ export function AuthProvider({ children }) {
     const value = {
         user, 
         isAuthenticated: user?.is_authenticated || false, 
+        loading,
         setUser, 
         logout
     }
