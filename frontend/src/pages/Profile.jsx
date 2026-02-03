@@ -22,6 +22,8 @@ export default function Profile() {
     const { username } = useParams(); // Profile being viewed
 
     const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
+    // const [error, setError] = useState(null);
 
     // Other hooks for functionality.
     const [posts, setPosts] = useState(profile?.posts || []);
@@ -34,6 +36,9 @@ export default function Profile() {
 
     useEffect(() => {
         async function fetchProfile() {
+            setLoading(true);
+            setProfile(null);
+            // setError(null);
             try {
                 const res = await api.get(`/profile/${username}`);
                 const data = res.data;
@@ -45,12 +50,16 @@ export default function Profile() {
                 setIsFollowing(data.is_following || false);
             } catch (err) {
                 console.error("Error fetching profile:", err.response?.data?.error || err.message);
+                // setError(err.response?.data?.error || "User not found");
+            } finally {
+                setLoading(false);
             }
         }
         fetchProfile();
     }, [username]);
+    
 
-    if (!profile) return (
+    if (loading) return (
         <>
             <p>Loading profile...</p>
             <div className="flex items-center space-x-4">
@@ -60,6 +69,15 @@ export default function Profile() {
                     <Skeleton className="h-4 w-[200px]" />
                 </div>
             </div>  
+        </>
+    )
+
+    if (!profile) return (
+        <>
+            <div className="flex flex-col items-center justify-center p-10">
+                <h1 className="text-2xl font-bold text-red-500">404 - Error</h1>
+                <p className="text-gray-500">The user "{username}" does not exist on The Warp Network.</p>
+            </div>
         </>
     )
 

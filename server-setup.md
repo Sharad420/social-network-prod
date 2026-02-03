@@ -114,3 +114,9 @@
 ### Message queuing and caching
 - Nothing needed as of now, if requests get exponentially more and stuff, probably have to.
 - Caching also is unnecessary as of now.
+
+
+### Race conditions
+- The race conditions mentioned here are frontend/backend discrepancies, not DB race conditions:
+1. Auth context checking and Profile loading: Filling up Auth Context via backend API call was taking longer than the loading of profile, which caused user to be logged out. Fix: Employed a spinner and made use of the loading hook in Authcontext to ensure page loads after AuthContext has been filled.
+2. 

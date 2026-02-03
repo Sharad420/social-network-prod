@@ -13,10 +13,13 @@ export default function Logout() {
     const { logout } = useAuth();
 
     useEffect(() => {
-        logout();
-        toast.info("You have been logged out.")
-        navigate("/login", {replace: true}); // Replaces logout with login on browser history stack
-    }, []);
+        const performLogout = async () => {
+            await logout();
+            toast.info("You have been logged out.")
+            navigate("/login", {replace: true}); // Replaces logout with login on browser history stack
+        };
+        performLogout();
+    }, [logout, navigate]);
 
     return null;
 }
