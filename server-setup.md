@@ -119,4 +119,6 @@
 ### Race conditions
 - The race conditions mentioned here are frontend/backend discrepancies, not DB race conditions:
 1. Auth context checking and Profile loading: Filling up Auth Context via backend API call was taking longer than the loading of profile, which caused user to be logged out. Fix: Employed a spinner and made use of the loading hook in Authcontext to ensure page loads after AuthContext has been filled.
-2. 
+2. The race condition occurred because the logout() function is an asynchronous network request that takes time to delete the server-side session cookie, but the frontend's Maps("/login") was firing instantly before that deletion finished. Upon arriving at the login route, the GuestGuard component checked the still-active authentication state, incorrectly identified the user as still logged in, and immediately bounced them back to the Home page. Consequently, the Home page would mount and fetch data using the not-yet-cleared cookie, leading to the "ghost" behavior where a supposedly logged-out user could still see their private interactions and liked posts.
+
+The Fix: Use await logout() to force the browser to finish the cookie deletion and state reset before the navigation logic is allowed to execute.
