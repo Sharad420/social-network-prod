@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 import { useState, useEffect } from "react"
 import { Skeleton } from "../components/ui/skeleton";
@@ -22,6 +22,7 @@ export default function Profile() {
     const { username } = useParams(); // Profile being viewed
 
     const [profile, setProfile] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     // Other hooks for functionality.
     const [posts, setPosts] = useState(profile?.posts || []);
@@ -34,6 +35,8 @@ export default function Profile() {
 
     useEffect(() => {
         async function fetchProfile() {
+	    setLoading(true);
+	    setProfile(null);
             try {
                 const res = await api.get(`/profile/${username}`);
                 const data = res.data;
@@ -45,12 +48,14 @@ export default function Profile() {
                 setIsFollowing(data.is_following || false);
             } catch (err) {
                 console.error("Error fetching profile:", err.response?.data?.error || err.message);
-            }
+            } finally {
+		setLoading(false);
+	    }
         }
         fetchProfile();
     }, [username]);
 
-    if (!profile) return (
+    if (loading) return (
         <>
             <p>Loading profile...</p>
             <div className="flex items-center space-x-4">
@@ -61,6 +66,15 @@ export default function Profile() {
                 </div>
             </div>  
         </>
+    )
+
+    if (!profile) return (
+	<>
+	    <div className="flex flex-col items-center justify-center p-10">
+	        <h1 className="text-2xl font-bold text-red-500">404 - Error</h1>
+		<p className="text-gray-500">The user "{username}" does not exist on The Warp Network.</p>
+	    </div>
+	</>
     )
 
     const isOwnProfile = isAuthenticated && loggedInUser?.username === username;
@@ -134,7 +148,7 @@ export default function Profile() {
             <div className="max-w-2xl mx-auto p-4">
                 {/* Top section with username + follow/unfollow */}
                 <div className="flex items-center justify-between mb-6">
-                    <h1 className="text-2xl font-bold">@{profile.username}</h1>
+                    <h1 className="font-bold text-xl sm:text-2xl md:text-3xl break-all leading-tight max-w-full">@{profile.username}</h1>
 
                     {!isOwnProfile && (
                         <button
@@ -201,12 +215,12 @@ export default function Profile() {
                 <ul className="space-y-2">
                     {followList.map((user, index) => (
                     <li key={index}>
-                        <a
-                        href={`/profile/${user.username}`}
+                        <Link
+                        to={`/profile/${user.username}`}
                         className="text-blue-600 hover:underline"
                         >
                         {user.username}
-                        </a>
+                        </Link>
                     </li>
                     ))}
                 </ul>
