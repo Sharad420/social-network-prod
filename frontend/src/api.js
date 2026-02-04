@@ -12,7 +12,9 @@ const API_BASE = import.meta.env.VITE_API_BASE || "/api";
 // Create API instance
 const api = axios.create({
     baseURL:API_BASE,
-    withCredentials: true
+    withCredentials: true,
+    xsrfCookieName: 'csrftoken',
+    xsrfHeaderName: 'X-CSRFToken',
 });
 
 // Attach tokens to every request

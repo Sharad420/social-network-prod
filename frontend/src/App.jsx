@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
 import Layout from "./components/Layout";
 import ProtectedRoute from './components/ProtectedRoute';
+import GuestGuard from './components/GuestGuard';
 import Following from "./pages/Following";
 import Home from "./pages/Home";
 import Login from './pages/Login';
@@ -45,11 +46,37 @@ function App() {
               }
             />
 
+
+            {/* Guest only routes - can access them only as a guest */}
+            <Route 
+              path="/login" 
+              element={
+                <GuestGuard>
+                  <Login />
+                </GuestGuard>
+              } 
+            />
+            
+            <Route 
+              path="/register" 
+              element={
+                <GuestGuard>
+                  <Register />
+                </GuestGuard>
+              } 
+            />
+
+            <Route 
+              path="/forgotpassword" 
+              element={
+                <GuestGuard>
+                  <PasswordReset />
+                </GuestGuard>
+              } 
+            />
+
             {/* More routes */}
-            <Route path="/login" element={<Login />} />
             <Route path="/logout" element={<Logout />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgotpassword" element={<PasswordReset />} />
           </Route>
         </Routes>
       </AuthProvider>

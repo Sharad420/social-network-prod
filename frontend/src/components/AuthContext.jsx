@@ -16,7 +16,7 @@ export function AuthProvider({ children }) {
     const testRefresh = async () => {
         try {
             const res = await axios.post(
-            "https://127.0.0.1:8000/token/refresh",
+            "https://www.thewarpnetwork.com/api/token/refresh",
             {}, // no body, backend should read refresh token from cookie
             { withCredentials: true }
             );
@@ -63,7 +63,7 @@ export function AuthProvider({ children }) {
     const refreshAccessToken = async () => {
         try {
             console.log(refresh ? "🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵🔵 Using localStorage refresh" : "🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢🟢 Using cookie refresh");
-            const res = await axios.post("https://127.0.0.1:8000/token/refresh", 
+            const res = await axios.post("https://www.thewarpnetwork.com/api/token/refresh", 
                 {}, 
                 { withCredentials: true }
             );
@@ -109,7 +109,7 @@ export function AuthProvider({ children }) {
 
             // Fetch user info from backend
             try {
-                const res = await axios.get("https://127.0.0.1:8000/user", {
+                const res = await axios.get("https://www.thewarpnetwork.com/api/user", {
                     headers: { Authorization: `Bearer ${token}` }
                 })
                 setUser(res.data)// { is_authenticated, username }
@@ -126,7 +126,8 @@ export function AuthProvider({ children }) {
     // Provide the user, isAuthneticated for ease, setUser hook and logout function.
     const value = {
         user, 
-        isAuthenticated: user?.is_authenticated || false, 
+        isAuthenticated: user?.is_authenticated || false,
+	loading, 
         setUser, 
         logout
     }
