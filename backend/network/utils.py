@@ -94,9 +94,9 @@ async def send_verification_email(to_email: str, code: str):
                                         }
                                 ],
                                 "Subject": "Verify your email",
-                                "TextPart": f"Hello user, your verification code is {code}. Please enter it within 3 minutes to be validated.",
-                                "HTMLPart": f"""<h3>Verify your account</h3>
-                                              <p>Your code is: <strong>{code}</strong>. Please enter it within 3 minutes to be validated.</p>
+                                "TextPart": f"Ah yes, your secret digits\n Your verification code is {code}. Please enter it within 3 minutes to be validated.",
+                                "HTMLPart": f"""<h3>Ah yes, your secret digits</h3>
+                                              <p>Your code is: <strong>{code}</strong>. Please enter it within 3 minutes to be validated. Cheers!</p>
                                               """,
                         }
                 ]
