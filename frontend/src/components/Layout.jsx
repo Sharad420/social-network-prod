@@ -24,7 +24,7 @@ export default function Layout() {
         <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8 w-full">
           {/* Brand (left edge) */}
           <div className="text-xl font-bold text-blue-600">
-            <Link to="/">Network</Link>
+            <Link to="/">The Warp</Link>
           </div>
 
           {/* Desktop Nav (right side with proper spacing) */}
