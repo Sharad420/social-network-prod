@@ -65,15 +65,15 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    # 'django.middleware.csrf.CsrfViewMiddleware',
+#    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
-    'corsheaders.middleware.CorsMiddleware'
+    'allauth.account.middleware.AccountMiddleware'
 ]
 
 ROOT_URLCONF = 'project4.urls'
@@ -121,6 +121,8 @@ else:
 
 
 AUTH_USER_MODEL = "network.User"
+# Added big auto field to avoid warnings.
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -185,8 +187,14 @@ if DEBUG:
 
     CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
 else:
-    CSRF_TRUSTED_ORIGINS = []
-    CORS_ALLOWED_ORIGINS = []
+    CSRF_COOKIE_HTTPONLY = False # Allows for js to read only the CSRF cookie.
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    CSRF_TRUSTED_ORIGINS = [
+        "https://thewarpnetwork.com",
+	"https://www.thewarpnetwork.com",
+	]
+    CORS_ALLOWED_ORIGINS = CSRF_TRUSTED_ORIGINS
 
 CORS_ALLOW_CREDENTIALS = True
 
@@ -198,7 +206,7 @@ CORS_ALLOW_CREDENTIALS = True
 MAILJET_API_KEY = os.getenv("MAILJET_API_KEY")
 MAILJET_SECRET_KEY = os.getenv("MAILJET_SECRET_KEY")
 DEFAULT_FROM_EMAIL = "no-reply@thewarpnetwork.com"
-DEFAULT_FROM_NAME = "Mailjet Pilot - No Reply"
+DEFAULT_FROM_NAME = "WarpNet Pilot - No Reply"
 SERVER_EMAIL = "support@thewarpnetwork.com"
 
 # A 'Console' backend for local development
@@ -215,3 +223,18 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
     "BLACKLIST_AFTER_ROTATION": True,
 }
+
+#HTTPS AND CSRF setting
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+
+# Currently redundant but just keep them in case you wanna fire up CSRF again
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+# Ensure only HTTPS requests are entertained for the next year
+if not DEBUG:
+	SECURE_HSTS_SECONDS = 31536000 # 1 year
+	SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+	SECURE_HSTS_PRELOAD = True
