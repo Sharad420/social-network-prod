@@ -6,7 +6,7 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { motion, AnimatePresence } from "motion/react";
-
+import { Link } from "react-router-dom";
 
 import { useAuth } from "./AuthContext";
 import api from "../api";
@@ -147,12 +147,12 @@ export default function Post({ post, canEditAndDelete = false, onDelete, onEdit 
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
             <span className="font-bold" >
-              <a 
-                href={`/profile/${post.user.username}`}
+              <Link
+                to={`/profile/${post.user.username}`}
                 className="!text-black !hover:underline"
               >
                 {post.user.username}
-              </a>
+              </Link>
             </span>
             <span className="text-sm text-gray-500">{formatTime(post.timestamp)}</span>
           </CardTitle>
@@ -278,12 +278,12 @@ export default function Post({ post, canEditAndDelete = false, onDelete, onEdit 
               <ul className="space-y-2">
                 {likers.map((liker, index) => (
                   <li key={index}>
-                    <a
-                      href={`/profile/${liker.username}`}
+                    <Link
+                      to={`/profile/${liker.username}`}
                       className="text-blue-600 hover:underline"
                     >
                       {liker.username}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
