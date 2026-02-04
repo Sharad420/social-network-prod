@@ -23,6 +23,7 @@ from django.core.paginator import Paginator
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from django.contrib.auth.hashers import check_password
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -131,7 +132,11 @@ def logout_view(request):
             pass
         
         response = Response({"message":"Successfully logged out"}, status=status.HTTP_200_OK)
-        response.delete_cookie("refresh_token", path="/")
+        response.delete_cookie(
+		"refresh_token",
+		path="/",
+		samesite="None", 
+	)
         return response
     except TokenError:
         raise InvalidToken("Invalid refresh token")
@@ -169,6 +174,7 @@ def check_username(request):
 
 
 """Sends verification email for registering/password reset"""
+
 async def send_verification(request):
     try:
         if request.method != "POST":
@@ -223,11 +229,14 @@ async def send_verification(request):
         return JsonResponse({"message": "Email verification sent"})
 
     except Exception as e:
-        traceback.print_exc()
+       # traceback.print_exc()
+        error_msg = f"Exception: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg) # This SHOULD go to journalctl
         return JsonResponse({"error": str(e)}, status=500)
 
 
 # Verifes the code entered by the user.
+
 async def verify_email(request):
     if request.method != "POST":
         return JsonResponse({"error": "Invalid method"}, status=405)
@@ -322,6 +331,7 @@ async def register(request):
         return JsonResponse({"error": f"Account creation failed: {str(e)}"}, status=400)
 
     return JsonResponse({"message": "Account created successfully! Login to continue."}, status=201)
+
 
 async def reset_password(request):
     if (request.method != "PATCH"):
