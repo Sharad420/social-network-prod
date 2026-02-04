@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../components/AuthContext";
 import { toast } from "sonner";
@@ -11,13 +11,20 @@ export default function Logout() {
 
     // Takes the logout function from AuthContext.
     const { logout } = useAuth();
+    const hasRun = useRef(false);
 
     useEffect(() => {
-        logout();
-        toast.info("You have been logged out.")
-        navigate("/login", {replace: true}); // Replaces logout with login on browser history stack
-    }, []);
+        if (hasRun.current) return;
+        hasRun.current = true;
 
+        const performLogout = async () => {
+            await logout();
+            toast.info("You have been logged out.")
+            navigate("/login", {replace: true}); // Replaces logout with login on browser history stack
+        };
+        performLogout();
+    }, [logout, navigate]);
+	
     return null;
 }
 
