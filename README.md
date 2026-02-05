@@ -2,7 +2,7 @@
 
 A production-oriented social network built with **Django (REST API)** and **React**, focused on clean architecture, explicit tradeoffs, and real-world authentication flows.
 
-This project prioritizes **clarity, correctness, and maintainability** over premature complexity.
+This project prioritizes **clarity, correctness, and maintainability** over premature complexity and is **fully deployed on a live server**.
 
 ---
 
@@ -72,6 +72,31 @@ All interactions (likes, follows, posts) are handled via REST APIs.
 - RESTful API design
 - Token-based authentication
 - Environment-based configuration
+
+### Infrastructure / Deployment
+- Linux-based cloud server
+- Nginx (reverse proxy & HTTPS termination)
+- Gunicorn (WSGI application server)
+- Process manager for backend reliability
+- Custom domain with secure HTTPS (TLS)
+- Environment-based configuration
+
+---
+
+## Deployment & Hosting
+
+This application is **fully deployed and running on a remote server**, not just a local or demo setup.
+
+High-level deployment details:
+- Hosted on a **Linux-based cloud server**
+- **Nginx** acts as a reverse proxy and handles HTTPS
+- Backend served via a **WSGI gateway interface**
+- **Gunicorn** used as the application server
+- Process manager ensures backend resilience and restarts
+- Custom domain configured with **secure HTTPS (TLS)**
+- Secrets and environment-specific settings managed via environment variables
+
+Detailed infrastructure and setup steps are documented separately in `server-setup.md`.
 
 ---
 
