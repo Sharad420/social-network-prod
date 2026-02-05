@@ -2,7 +2,7 @@
 
 A production-oriented social network built with **Django (REST API)** and **React**, focused on clean architecture, explicit tradeoffs, and real-world authentication flows.
 
-This project prioritizes **clarity, correctness, and maintainability** over premature complexity and is **fully deployed on a live server**.
+This project prioritizes **clarity, correctness, and maintainability** over premature complexity and is **fully deployed on a live server** at **https://www.thewarpnetwork.com**.
 
 ---
 
