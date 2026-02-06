@@ -7,7 +7,31 @@
 ## 3. System Overview
 
 ### 3.1 High-Level Architecture
+
+The system follows a client-server architecture with a clear seperation between fronted, backend and infrastructure layers. A React-based frontend communicates with a Django REST backend over HTTPS. The backend handles application logic and data persistence, while a relational database stores all core entitites.
+In production, incoming requests are routed through a reverse proxy before reaching the application server. Authentication is handled at the backend using JWT-based mechanisms, and all external communication occurs over secure HTTPS connection.
+
+High-level architecture diagrams illustrating the relations between frontend, backend, database and prod infrastructure is provided.
+
 ### 3.2 Component Responsibilities
+
+The system is composed of the following major components, each with clearly defined reponsibilitites.
+
+**Frontend(React)**
+The frontend is implemented as a single-page application(SPA) using React. It is responsible for UI rendering, client-side interactions and managing authenticated user flows. Authentication state is maintained via a shared context, enabling protected routes and conditional rendering based on user access.
+The frontend communicates with the backend exclusively through RESTful APIs and includes authentication tokens in requests ro protected endpoints.
+
+**Backend(Django + Django REST Framework)**
+The backend is desinged as a monolithic application that consolidates authentication, business logic, and data access within a single service. It exposes RESTful APIs that support features such as user management, content creation and social interactions.
+
+**Database(Relational)**
+The Database(PostgreSQL) stores persistent application data such as user accounts, posts, relationships and metadata. A relational schema is enforced, and all access is via Django's ORM.
+
+**Ephemeral Data Store(Redis)**
+Used for managing short-lived, security-sensistive data during authentication workflows, including generated OTPs and temporary email identifiers. TTL-based expiration ensures correctness and prevents persistence of this data.
+
+**Production Infrastructure**
+The production environment is responsible for securely serving the application and managing runtime concerns. A reverse proxy handles incoming traffic and HTTPS termination, while a process manager ensures the application remains available and resilient to failures. This setup provides a stable and production-ready deployment environment distinct from local development configurations.
 
 ## 4. Backend Design
 
@@ -53,5 +77,6 @@ State management in this project was kept minimal, favouring simple, built-in Re
 ## 10. Future Work & Improvements
 
 ## 11. Lessons Learned
+
 
 
