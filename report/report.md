@@ -4,6 +4,18 @@
 
 ## 2. Problem Statement & Goals
 
+Many full-stack applications emphasize feature breadth while underemphasizing architectural clarity and production readiness. Many projects remain confined to the local environment, never having to deal with authentication security, deployement and production concerns.
+The goal of this project is not to fully replicate a large-scale social network platform like X(formerly Twitter), but to design an application with clear seperation of concerns, sound coding and software practices and reliable production deployment.
+This project focuses on underestandability, clarity and maintanability, while also leaving room for extensibility.
+
+The primary goals of this project are as follows:
+- Design and implement a clean full-stack architecture with well defined frontend, backend and infrastructure boundaries.
+- Build a secure authentication system with proper handling of sensitive and time-bound user data, with correct control flows.
+- Develop a backend that follows a clear mental model and emphasises correctness and maintanability.
+- Implement a responsive single-page application that accurately reflects backend state and authorization flows.
+- Deploy the application on a live production server with HTTPS, process management, solid firewall settings, reverse proxy configuration and logging.
+- Maintain a codebase that is readable, extensible and suitable for future evolution.
+
 ## 3. System Overview
 
 ### 3.1 High-Level Architecture
@@ -35,9 +47,70 @@ The production environment is responsible for securely serving the application a
 
 ## 4. Backend Design
 
-### 4.1 Data Models
-### 4.2 API Design
-### 4.3 Authorization & Permissions
+### 4.1 Architectural Style
+The backend is implemented as a monolithic Django application using Django REST Framework. All core application concerns- authentication, authorization, business logic and data access are consolidated within a single service. This enables straightforward deployment and predictable information and control flow.
+
+### 4.2 Application Structure
+All related models, views, serializers and helper utilities are grouped together to maintain seperation of concerns and improve maintainability. Django REST Framework is used to expose API endpoints, handle request parsing and serialize responses. Core business logic is enforced at the backend layer, independent of frontend implementation details.
+
+### 4.3 Data Models
+Persistent data is stored in a relational database and accessed exclusively through Django's ORM. Core entities include users, posts, relationships between users, commments, refresh sessions (strictly for password reset and blacklisting expired tokens, thereby maintaining the philosophy of using JWT as the only method for authentication and avoiding server-side session storage). The relational model was chosen to provide strong data guarantees and predictable behaviour. The ORM is a stable and safe abstraction layer allowing for controlled access.
+
+### 4.4 Authentication & Authorization
+Authentication is implemented using JSON Web Tokens(JWT). Upon successful login, the backend issues a short-lived access token and a long-lived refresh token that are included in every request to protected endpoints. Authorization is enforced using DRF's permission classes to guarantee consistent security.
+
+### 4.5 Asynchronous Execution
+While the backend primiarily follows a synchronous request-response model, some workflows benifit more from a non-blocking execution. An ASGI worker is used to support asynchronous views like user registration, email verification, and password reset flows. There is an important security consideration here that will be further expanded upon in 6.Authentication & Security Considerations. This hybrid approach ensures that the backend benifits from the rich support that Django's synchronous environment natively provides, while ensuring that operations involving outbound I/O do not block request handling.
+
+### 4.6 Ephemeral State Management
+Redis is used as an in-memory data store for managing short-lived, security-sensitive data required during authentication-related workflows. This includes OTPs and temporary hashed email addreses used during registration and password reset. By seperating ephemeral state from persistent storage, the backend avoids polluting the RDBMS with transient data.
+
+### 4.7 Backend Supporting Services
+
+The backend includes dedicated helper modules to encapsulate interactions with external services and supporting infrastructure.
+
+Redis helper utilities provide an interface for creating, retrieving, and deleting ephemeral authentication data, keeping Redis-specific logic isolated from view-level code.
+
+Email delivery is handled through a mailing helper that integrates with an external email service provider via HTTPS. Due to firewall restrictions on the production server that block outbound SMTP traffic, a custom SMTP server would have taken a lot of effort to set up. Instead, the backend communicates with the email service API to send verification and password reset emails.
+
+### 4.8 Backend View Responsibilities
+
+Backend views are organized around functional responsibilities rather than individual endpoints. Broadly, views fall into the following categories:
+
+- **Authentication and Account Flow**  
+  Handles user registration, login, email verification, and password recovery workflows. These views integrate with Redis for ephemeral state and utilize asynchronous execution where external service calls are required.
+
+- **Content and Interaction Flow**  
+  Manages creation, retrieval, and interaction with user-generated content. These views enforce authorization rules and ensure data consistency.
+
+- **User and Relationship Flow**  
+  Provides endpoints for accessing user profiles and managing relationships between users, such as following and unfollowing behavior.
+
+This categorization allows individual endpoints to evolve independently while maintaining consistent security and responsibility boundaries.
+
+### 4.9 API Design and Serialization
+
+The backend exposes a RESTful API designed around predictable requests and responses. JSON is used as the primary data exchange format between the frontend and backend.
+
+Django REST Framework serializers define explicit schemas for incoming and outgoing data. These serializers handle input validation, data transformation, and controlled exposure of model fields, ensuring that only intended data is accepted and returned by the API.
+
+### 4.10 Application Configuration and Authentication Integration
+
+Global application behavior is configured through Django’s settings module, enabling environment-specific configuration for development and production deployments. Security-sensitive settings such as secret keys, allowed hosts, and authentication configuration are centralized and managed separately from application logic. Settings regarding the database driver, CSRF, CORS, HTTPS and JWT settings are all configured in line with the production readiness of the project.
+
+JWT authentication and permission enforcement are configured at the framework level using Django REST Framework’s authentication and permission system. This ensures that protected endpoints enforce authentication consistently without requiring per-view security logic.
+
+### 4.11 Request Lifecycle Summary
+
+A typical backend request follows this sequence:
+
+1. The request is routed through the reverse proxy and forwarded to the application server
+2. Authentication and authorization checks are applied where required
+3. The appropriate view processes the request and executes business logic
+4. Persistent or ephemeral data stores are accessed as needed
+5. A serialized JSON response is returned to the client
+
+This structured request flow ensures predictable behavior, centralized security enforcement, and maintainable backend logic.
 
 ## 5. Frontend Design
 
@@ -77,6 +150,7 @@ State management in this project was kept minimal, favouring simple, built-in Re
 ## 10. Future Work & Improvements
 
 ## 11. Lessons Learned
+
 
 
 
