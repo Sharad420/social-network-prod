@@ -114,9 +114,40 @@ This structured request flow ensures predictable behavior, centralized security 
 
 ## 5. Frontend Design
 
-### 5.1 State Management
-### 5.2 Authentication Handling
-### 5.3 UX & Loading States
+### 5.1 Architectural Style
+The frontend is implemented as a single-page application (SPA) using React. It is responsible for rendering the user interface, handling client-side routing and manage authenticated user interactions. All application state is gotten from backend API responses, with no reliance on server side rendering or template driven views.
+
+### 5.2 Routing and Navigation
+Client side navigation is hanedled entirely within the frontend, enabling smooth navigation without full page reloads. Protected routes are enforced at the frontend level to restrict access to authenticated sections of the application. These checks improve user experience and prevent unauthorized navigation before requests are made.
+
+### 5.3 State Management Strategy
+Frontend state management is intentionally kept minimal. Local component state (Hooks and Effects) are used for component specific concerns, while shared application state like authentication status is managed using React Context API. This keeps state management minimal and simple and is sufficient for the scope of this project.
+
+### 5.4 Authentication Flow
+Authentication on the frontend is token-based. Upon successful login or registration, the client recieves a JWT from the backend, which is stored and attached to subsequent API requests to protected endpoints. An authentication context maintains the current user's authenticated state and exposes it to components that require access control. This enables conditional rendering of UI elements and enforced protected routes based on auth status.
+
+### 5.5 API Interaction Layer
+The frontend communicates with the backend exclusively through RESTful API calls over HTTPS. A centralized API interceptor (using Axios) layer is used to standardize request configuration, handle headers, attach cookies and process responses, including the pipeline followed when the access token has expired. This avoids duplicating request logic across components and maintains consistent error handling.
+
+### 5.6 UI composition and Reusability
+The user interface is composed of reusable components that encapsulate presentation and interaction logic. Components are structured to minimize coupling and promote reuse across different views.
+
+### 5.7 Frontend–Backend Responsibility Boundary
+The frontend is designed to remain as thin as possible, delegating business logic, validation, and authorization decisions to the backend. The frontend’s primary responsibility is to reflect backend state accurately and provide a responsive user experience.
+
+## 6. UI/UX Design Considerations
+
+### 6.1 Component Library and Visual Consistency
+The user interface is built using a reusable component library to ensure visual consistency and reduce custom styling complexity. Prebuilt components are composed and customized to maintain a clean, minimal interface while allowing rapid iteration on layout and interaction patterns.
+
+### 6.2 Forms and User Feedback
+User input flows such as registration and authentication are designed to provide immediate and clear feedback. Form schemas are used to validate input constraints consistently, reducing invalid submissions and improving usability. Validation is performed both client-side for responsiveness and server-side for correctness, ensuring that UX improvements do not compromise security or data integrity.
+
+### 6.3 Responsive Interaction Design
+Certain user interactions, such as checking username availability during registration, are designed to be responsive without generating excessive network requests. Client-side debouncing is used to delay validation calls until user input stabilizes, improving perceived performance and reducing backend load.
+
+### 6.4 Content Loading and Pagination
+Content feeds are implemented using paginated backend APIs, which are presented in the UI as an infinite scrolling experience. This approach balances backend performance and network efficiency with a smooth, uninterrupted browsing experience for users. Pagination remains explicit at the API level, allowing predictable data access while enabling flexible presentation on the frontend.
 
 ## 6. Authentication & Security Considerations
 
@@ -150,6 +181,7 @@ State management in this project was kept minimal, favouring simple, built-in Re
 ## 10. Future Work & Improvements
 
 ## 11. Lessons Learned
+
 
 
 
