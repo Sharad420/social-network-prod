@@ -60,7 +60,7 @@ Persistent data is stored in a relational database and accessed exclusively thro
 Authentication is implemented using JSON Web Tokens(JWT). Upon successful login, the backend issues a short-lived access token and a long-lived refresh token that are included in every request to protected endpoints. Authorization is enforced using DRF's permission classes to guarantee consistent security.
 
 ### 4.5 Asynchronous Execution
-While the backend primiarily follows a synchronous request-response model, some workflows benifit more from a non-blocking execution. An ASGI worker is used to support asynchronous views like user registration, email verification, and password reset flows. There is an important security consideration here that will be further expanded upon in **[7. Authentication & Security Considerations]**(#7. authentication & security considerations). This hybrid approach ensures that the backend benifits from the rich support that Django's synchronous environment natively provides, while ensuring that operations involving outbound I/O do not block request handling.
+While the backend primiarily follows a synchronous request-response model, some workflows benifit more from a non-blocking execution. An ASGI worker is used to support asynchronous views like user registration, email verification, and password reset flows. There is an important security consideration here that will be further expanded upon in **[7. Authentication & Security Considerations]**(#7-authentication--security-considerations). This hybrid approach ensures that the backend benifits from the rich support that Django's synchronous environment natively provides, while ensuring that operations involving outbound I/O do not block request handling.
 
 ### 4.6 Ephemeral State Management
 Redis is used as an in-memory data store for managing short-lived, security-sensitive data required during authentication-related workflows. This includes OTPs and temporary hashed email addreses used during registration and password reset. By seperating ephemeral state from persistent storage, the backend avoids polluting the RDBMS with transient data.
@@ -181,6 +181,7 @@ State management in this project was kept minimal, favouring simple, built-in Re
 ## 10. Future Work & Improvements
 
 ## 11. Lessons Learned
+
 
 
 
