@@ -151,9 +151,135 @@ Content feeds are implemented using paginated backend APIs, which are presented 
 
 ## 7. Authentication & Security Considerations
 
-## 8. Deployment & Infrastructure
+### 7.1 Authentication Model
+The application uses a token-based model built on JSON Web Tokens(JWT). Upon successful authentication, the backend issues a signed access token that must be included with subsequent requests to protected end points. This approach enables stateless authentication.
 
-## 8. Tradeoffs & Design Decisions
+### 7.2 Authorization & Access Control
+Auth checks are performed exclusively at the backend to ensure users can only access or modify resources they are permitted to interact with. This includes enforcing ownership constraints on user-generated content and restricting access to authenticated-only operations. This ensures that client-side enforcement is not relied upon.
+
+### 7.3 Secure Handling of Sensitive Data
+Sensitive user data is never stored or transmitted in plaintext. Passwords are securely hashed before storage and One-Time passwords are stored only in ephemeral stores.
+
+### 7.4 Transport Level Security
+All client-server communcation occurs over a secure HTTPS connection, certified by a trusted root authority. TLS termination is handled at the reverse proxy level, providing a secure communication channel between clients and the backend.
+
+### 7.5 Protection Against Common Web Vulnerabilities
+The backend framework provides built-in protections against common web vulnerabilities such as cross-site scripting (XSS) and cross-site request forgery (CSRF). Since the application uses token-based authentication and does not rely on cookie-based sessions for API access, CSRF risk is inherently reduced for authenticated endpoints. However, for now, access tokens are stored in the local store of the browser, which exposes it to CSRF vulnerabilites. This was simply done as a thought experiment to store the access token locally, and the refresh token in a cookie. The inherent CSRF vulnerability this carries has been acknowleged, and weighed against the potential implications this may cause. 
+Input validation is enforced through serializers, ensuring that malformed or unexpected data does not propagate into application logic or persistent storage.
+
+### 7.6 Operational Security Considerations
+Security-sensitive configuration values such as secret keys and authentication parameters are centralized within application configs and are not hardcoded into the codebase. Environment specific settings allow development and production environments to maintain different security approaches.
+
+### 7.7 Additional Security Configuration and Constraints
+
+Cross-origin request handling is explicitly configured at the application level. Allowed origins for CORS and CSRF protection are restricted to known frontend domains, preventing unauthorized cross-origin access in production environments. 
+The backend relies on Django’s ORM for database interactions, which provides built-in protection against SQL injection by avoiding raw query construction and enforcing parameterized queries by default.
+
+Certain authentication-related workflows, such as user registration, email verification, and password reset, are implemented using asynchronous views. Due to current framework limitations around applying traditional permission classes and CSRF protection to asynchronous views, these endpoints do not enforce CSRF checks at the framework level.
+This design is considered acceptable within the defined threat model, as these endpoints do not require an authenticated session and instead rely on time-bound, one-time credentials delivered through verified email ownership. One-time passwords (OTPs) and temporary identifiers introduce an additional verification layer that mitigates unauthorized use, even in the absence of session-based protections.
+The system intentionally limits the scope and capabilities of these asynchronous endpoints and ensures that all sensitive state is short-lived and validated server-side. A more restrictive security model—such as full CSRF enforcement or unified permission handling for asynchronous views would be considered if these endpoints were extended to handle authenticated or state-altering operations beyond their current scope.
+
+## 8. Deployment & Infrastructure
+The application is fully deployed on a live production server and is desinged to resemble a real-world deployment environment. The deployment prioritizes reliability, security, and operational clarity.
+
+### Production Hosting
+The backend and frontend are hosted on a dedicated Linux-based virtual private server(Linode).
+
+- The application is publicly accessible via a custom domain.
+- The server env is configured for production use, seperate from local development workflows.
+- All services are managed directly on the server, providing full control over networking, process management, and security.
+
+### Web Server and Reverse Proxy
+**Nginx** is used as the primary web server and reverse proxy.
+
+Responsibilities include:
+- Terminating HTTPS connections
+- Routing incoming requests to appropriate backend services
+- Serving the frontend build effeciently.
+- Acting as the gateway between public internet and internal application services
+- Rate limiting requests coming into the server.
+- Attaching appropriate headers to outgoing responses.
+
+Nginx ensures:
+- Clean separation between application logic and network-level concerns
+- Improved performance and security through controlled request forwarding
+
+### Secure HTTPS Configuration
+
+The application is served exclusively over **HTTPS**.
+- TLS certificates are configured for the custom domain.
+- All HTTP traffic is redirected to HTTPS.
+
+This ensures compliance with modern browser security expectations and prevents man-in-the-middle attacks.
+
+### Application Server & Interface
+The backend is deployed using a **WSGI-compatible server with an ASGI worker.**
+
+- The primary application interface follows the WSGI enforced standard for synchronous request handling.
+- An ASGI worker is used to support asynchronous views where non-blocking operations are required (e.g., email dispatch during registration and password reset flows).
+
+This hybrid approach allows:
+- Stability and maturity of WSGI for most endpoints.
+- Selective use of async capabilities without converting the entire application to ASGI.
+
+### Process Management
+
+A dedicated **process manager(systemd)** is used to run and supervise backend services.
+
+- Ensures the application restarts automatically on failure
+- Maintains consistent uptime without manual intervention
+- Ensures all dependencies are synchronised and started as required for the application to run.
+
+This setup reflects production-grade operational practices rather than ad-hoc execution.
+
+### Redis Infrastructure
+
+A Redis instance runs as an internal service on the server.
+
+- Used exclusively for ephemeral data such as OTPs and temporary verification identifiers
+- Not exposed publicly
+- Integrated directly with backend helpers for controlled access
+
+Redis enhances performance and security by avoiding persistent storage for short-lived, sensitive data.
+
+### External Service Integration
+
+Transactional emails are sent via an external email service provider (Mailjet).
+
+- Email delivery is performed through HTTPS API calls rather than SMTP
+- This design avoids outbound SMTP restrictions enforced by Linode’s firewall
+- All communication with external services is encrypted and authenticated
+
+
+### Environment Separation and Configuration
+
+The deployment environment is configured independently from local development:
+
+- Production-specific settings are applied on the server
+- Sensitive configuration values are never hardcoded into the codebase
+- Runtime behavior is tailored for production workloads rather than debugging convenience
+
+This separation ensures predictable behavior and reduces the risk of accidental exposure.
+
+### Logging and Cron Jobs
+
+- Logging of system phenomena are logged using systemd's default logger, journalctl. This was done to ensure simplicity and can be extended as required.
+- A cron job has been set up to flush out all expired refresh tokens stored in the blacklisted token store at 00:00hrs everyday.
+
+### Operational Maturity
+
+The deployment reflects a deliberate step beyond local experimentation:
+
+- The system is live, accessible, and actively managed
+- Infrastructure components are explicitly configured and documented
+- Failure handling, security, and scalability considerations are baked into the deployment model
+
+This approach demonstrates readiness for real-world usage and future extension.
+
+
+A thorough and extensive report on how the server was set up can be found in server-setup.md
+
+## 9. Tradeoffs & Design Decisions
 
 ### REST APIs vs Real-Time Communication
 A central design decision in this project was to use traditional REST based APIs instead of a real-time communication protocol like WebSockets. Although social media networks are often associated with real-time updates, the core functionality of following/unfollowing users, viewing feeds, creating & liking posts does not require instantaenous propagation of state changes. For the scope of this project, REST provides a simpler, more predictable communication model. Using WebSockets would have introduced a lot of complexity during deployment around load balancing and connection management. At the current stage of the project, the payoff is simply not worth the complexity. On a final note, this system is designed to be able to support real time features in the futur without having to restructure the entire project.
@@ -176,11 +302,12 @@ A deliberate decision in this project was ot move beyond a purely local developm
 ### Frontend State Management
 State management in this project was kept minimal, favouring simple, built-in React mechanisms over heavier frameworks. This application relies on React's local component state(Hooks) and the Context API to manage authentication state and dynamic concerns. Given that the frontend is focused on rendering posts, handling user interactions and managing auth flows, this approach provided a clean mental model. More complex solutions such as Redux or other global state libraries were considered but ultimately dropped, due to unnecessary complexity and cognitive load, which went against the philosophy of this project. The current structure does not prevent the use of more complex state management tchniques, but until such complexity is warranted, a minimal state management system will serve our cause.
 
-## 9. Limitations & Known Gaps
+## 10. Limitations & Known Gaps
 
-## 10. Future Work & Improvements
+## 11. Future Work & Improvements
 
-## 11. Lessons Learned
+## 12. Lessons Learned
+
 
 
 
