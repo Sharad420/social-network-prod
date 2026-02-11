@@ -304,9 +304,17 @@ State management in this project was kept minimal, favouring simple, built-in Re
 
 ## 10. Limitations & Known Gaps
 
+While the system is fully functional and deployed in a production-like environment, certain limitations exist by design or due to the scope of the project. These tradeoffs were made consciously to prioritize clarity, correctness and learning value over premature complexity.
+
+### 10.1 Absence of Real-Time Communication
+
+The application currently relies only on RESTful APIs for client-server communication.
+
+
 ## 11. Future Work & Improvements
 
 ## 12. Lessons Learned
+
 
 
 
