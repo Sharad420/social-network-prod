@@ -1,6 +1,21 @@
 # The Warp Network - Design & Engineering Report
 
-## 1. Executive Summary
+## 1. Summary
+
+This project is a full-stack, production-deployed web application built to explore real-world system design, authentication flows, and infrastructure management beyond local development environments.
+The system consists of a Django-based API and a React-based single-page frontend application. It is deployed on a live Linux server behind an Nginx reverse proxy and served exclusively over HTTPS. The architecture reflects production-oriented design decisions rather than development-only convenience.
+Key technical characteristics include:
+- JWT-based stateless authentication with refresh token handling
+- OTP-driven email verification and password reset workflows
+- Redis-backed ephemeral storage afor security-sensistive, time-bound data
+- Asynchronous views for non-blocking operations
+- Controlled CORS and CSRF configuration
+- Reverse proxy configuration and secure HTTPS termination via Nginx
+- Explicit environment seperation between development and production
+- Deployment-aware infrastructure management
+
+The project emphasizes clarity of boundaries across frontend, backend, and infrastructure layers. Rather than introducing unecessary complexity, it prioritizes simplicity, operational correctness, and deliberate tradeoffs. Features such as caching layers, background job queues, and horizontal scaling are deferred.
+This project demonstrates not only technical implementation ability, but architectural awareness, production readiness, and a disciplined approach to tradeoffs. It serves as both a functional system and a structured exploration of real-world backend engineering.
 
 ## 2. Problem Statement & Goals
 
@@ -309,12 +324,196 @@ While the system is fully functional and deployed in a production-like environme
 ### 10.1 Absence of Real-Time Communication
 
 The application currently relies only on RESTful APIs for client-server communication.
+- Features such as live feeds and real time notifications are not implemented.
+- WebSocket-based communication was intenionally left out to avoid increasing complexity during the first live iteration.
+
+### 10.2 Monolithic Backend Architecture
+
+The backend follows a monolithic design.
+- All business logic, authentication and domain funcionality reside within a single Django application.
+- While this simplifies development and deployment, it limits independent scaling of specific services.
+
+A microservices aaproach could be explored if system complexity or traffic demands increase.
+
+### 10.3 Limited Async Security Coverage
+
+Some authentication related endpoints are implemented using asynchronous views.
+
+- Due to framework-level constraints, traditional permission classes and CSRF enforcement are not applied to these async ednpoints.
+- These endpoints are intentionally limited to unauthenticated workflows such as registration, email verification, and password resets.
+
+Security is maintained through compensating factors such as OTP-based verification, short-lived Redis storage, and strict scope limitation.
+
+### 10.4 Lack of Automated Testing 
+
+The project does not currently include a comprehensive automated testing suite.
+
+- Unit and integrations tests are absent.
+- Manual testing and controlled prod usage were prioritized.
+
+Introducing structured testing would be a necessary step before scaling the system.
+
+### 10.5 Frontend State Complexity 
+
+The frontend primarily relies on React hooks and context for state management.
+
+- As the application grows, state interactions may become harder to follow.
+- More structured state management libraries could improve long-term maintainability.
+
+This tradeoff was acceptable given the current scope and user base.
+
+
+### 10.6 Infrastructure Scalability Constraints
+
+The system is deployed on a single production server.
+
+- Horizontal scaling and load balancing are not currently implemented.
+- High availability and fault tolerance is limited.
+
+This deployement model is sufficient for current usage but would require redesign for large-scale or mission-critical environments.
+
+### 10.7 Monitoring Gaps
+
+Visibility is limited.
+
+- No centralized logging, metrics collection or alert system is in place. The only metrics and alert system is the one inherently provided by Linode.
+- Debugging relies on server logs and manual inspection.
+
+A more structured logging and monitoring system would enhance reliability and simplify issues in production.
+
+### 10.8 Dependency on External Email Service
+
+Email delivery relies on a third-party provider.
+
+- Service availability is an external dependency.
+- Email delivery features are not currently queued.
+
+A more robust messaging pipeline could help mitigate these risks in future iterations.
+
+### 10.9 No Application-Level Caching Layer
+
+The system does not currently implement a read-through or write-through caching strategy for database queries.
+Performance is maintained through efficient ORM queries and database indexing. For the current scale and traffic profile, this approach is sufficient and avoids premature optimization.
+If read-heavy traffic increases, introducing a caching layer (e.g., Redis-backed query caching) would reduce database load and improve response times.
+
+
+### 10.10 No Dedicated Message Queue or Background Worker System
+
+Asynchronous operations such as email dispatch are handled directly within async views rather than through a dedicated task queue.
+
+While this approach simplifies the architecture, it lacks:
+
+- Automatic retry mechanisms
+- Task persistence across application restarts
+- Distributed job processing
+
+A production-scale evolution of the system would introduce a background worker system (e.g., Celery with Redis or RabbitMQ).
 
 
 ## 11. Future Work & Improvements
 
+The current system establishes a stable, production-ready foundation. The following improvements outline a natural evolution path if the application were to scale in complexity, traffic or features.
+
+### Real-Time Capabilities
+
+Introduce WebSocket communication to support:
+- Live feed updates
+- Real-time notifications
+
+This would transition parts of the system from a purely request-response model to event-driven communication.
+
+### Background Task Processing
+
+Introduce a dedicated message queue and worker system to:
+- Decouple email dispatch from request lifecycles
+- Enable retry mechanisms for failed external API calls
+- Process long-running tasks
+
+This would strengthen operational resilience under network instability or third-party service delays.
+
+### Application-Level Caching
+
+Implement a caching strategy for read-heavy endpoints:
+- Redis-backed caching for frequently accesssed queries
+- Response-level caching for public resources
+
+This would reduce database load and improve response times under higher traffic conditions.
+
+### Horizontal Scalability
+
+Evolve infrastructure to support:
+- Load balancing across multiple backend instances
+- High availability
+
+Containerization (e.g Docker-based workflows) would simplify scaling and environment consistency.
+
+### Enhanced Security Hardening
+
+Further streghten security by:
+
+- Implementing rate limiting on individual endpoints
+- Introduce stricter async protections as framework support improves
+- Adding structures audit logging for sensistive actions
+
+These measures would prepare the system for larger user bases and higher threat exposure.
+
+### Observability and Monitoring
+
+Introduce production-grade observability:
+- Centralized logging
+- Metrics collection
+- Performance monitoring
+
+Improved monitoring would reduce mean time to detection (MTTD) and mean time to recovery (MTTR).
+
+### Automated testing and CI/CD
+
+Expand testing coverage through:
+- Unit tests for core business logic
+- Integration tests for API flows
+- End-to-end testing for authentication flows
+
+Integrating CI/CD would improve deployement safety.
+
+### Frontend Architecture Evolution
+
+As frontend cmoplexity increases:
+- Introduce more structured state management patterns
+- Improve UI/UX experience, such as adding a dark mode
+- Optimize performance with techniques like selective rendering
+
+
 ## 12. Lessons Learned
 
+Building and deploying this system provided practical insights that go beyond framework familiarity or feature implementation. The most valuable lessons did not emerge from writing code or learning how a certain language functions, but from making architectural decisions and working through real-world constraints.
+
+### Deployment
+
+Local dev hides a lot of complexity.
+Once deployed on a live server, a lot of considerations and configurations are to be made. The local development environment holds your hand, enables quick debugging and output of code, but to build a prod-ready system, something stable and reusable is required, along with the necessary artifacts to make this system run seamlessly.
+Handling issues such as reverse proxy misrouting, HTTPS configuration errors, and build mismatches between frontend and server environments strengthened practical debugging skills.
+Production systems fail in ways that local environments do not replicate. 
+
+### Security
+
+Security is not a checklist that can be followed, it is very contextual. 
+Every design choice made impacts security in a certain way, and the key is to find a reasonably working security posture that protects the system from major threats.
+
+### Simplicity
+
+Resisting premature complexity and focusing on a few key deliverables resulted in a stable system that is easier to follow, debug and scale in the future.
+Seperating concerns, following SOLID principles at a higher level, focusing on flexibility and making decisions based on the project's current scope were always kept in mind while designing this system.
+The key learning was that scalability should be introduced in response to real constraints, not hypothetical future problems.
+
+### Balance
+
+This project taught a very important lesson about balances and tradeoffs.
+Every system sits on a scale with weights tipping either way:
+- Simplicity vs scalability
+- Speed of development vs operational robustness
+- Flexibility vs strict structure
+
+Good design is not about blindly following a pre-established framework, but about finding and deciding the right balance for the current stage and scale of the project.
 
 
 
