@@ -58,6 +58,10 @@ export default function Profile() {
         fetchProfile();
     }, [username]);
     
+    useEffect(() => {
+        setShowFollowList(0);
+        setFollowList([]);
+    }, [username]);
 
     if (loading) return (
         <>
